@@ -1,0 +1,258 @@
+<script>
+ alert('tippe auf ok zum starten');
+</script>
+-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tylers snack game</title>
+    <Tylers snack game>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+        nav {
+            background-color: #666;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        main {
+            padding: 20px;
+        }
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Willkommen auf meiner Website</h1>
+    </header>
+    <nav>
+        <a href="#">Startseite</a>
+        <a href="#">Über uns</a>
+        <a href="#">Kontakt</a>
+    </nav>
+    <main>
+        <h2>Startseite</h2>
+        <p>Dies ist die Startseite meiner Website. Hier können Sie allgemeine Informationen finden.</p>
+    </main>
+    <footer>
+        <p>&copy; 2024 Meine Firma. Alle Rechte vorbehalten.</p>
+    </footer>
+</body>
+</html>
+-
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Spiel</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            border: 2px solid #000;
+        }
+
+        #startScreen, #gameOverScreen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="startScreen">
+        <h1>Snake Spiel</h1>
+        <button onclick="startGame()">Start</button>
+    </div>
+    <div id="gameOverScreen" style="display: none;">
+        <h1>Game Over</h1>
+        <p>Score: <span id="score">0</span></p>
+        <p>Record: <span id="record">0</span></p>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const scoreElement = document.getElementById('score');
+        const recordElement = document.getElementById('record');
+
+        const gridSize = 20;
+        const gridWidth = canvas.width / gridSize;
+        const gridHeight = canvas.height / gridSize;
+
+        let snake = [{x: 10, y: 10}];
+        let apple = {x: 15, y: 15};
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let record = localStorage.getItem('record') || 0;
+
+        function drawSnake() {
+            ctx.fillStyle = '#4CAF50';
+            snake.forEach(segment => {
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+            });
+        }
+
+        function drawApple() {
+            ctx.fillStyle = '#FF5722';
+            ctx.fillRect(apple.x * gridSize, apple.y * gridSize, gridSize, gridSize);
+        }
+
+        function moveSnake() {
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            snake.unshift(head);
+
+            if (head.x === apple.x && head.y === apple.y) {
+                generateApple();
+                score++;
+                if (score > record) {
+                    record = score;
+                    localStorage.setItem('record', record);
+                }
+            } else {
+                snake.pop();
+            }
+        }
+
+        function generateApple() {
+            let valid = false;
+            while (!valid) {
+                apple.x = Math.floor(Math.random() * gridWidth);
+                apple.y = Math.floor(Math.random() * gridHeight);
+                valid = !snake.some(segment => segment.x === apple.x && segment.y === apple.y);
+            }
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function checkCollision() {
+            const head = snake[0];
+            return (
+                head.x < 0 || head.x >= gridWidth ||
+                head.y < 0 || head.y >= gridHeight ||
+                snake.slice(1).some(segment => segment.x === head.x && segment.y === head.y)
+            );
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            document.addEventListener('keydown', keyDownHandler);
+            generateApple();
+            gameLoop();
+        }
+
+        function restartGame() {
+            snake = [{x: 10, y: 10}];
+            dx = 0;
+            dy = 0;
+            score = 0;
+            scoreElement.textContent = score;
+            gameOverScreen.style.display = 'none';
+            startGame();
+        }
+
+        function gameLoop() {
+            if (checkCollision()) {
+                gameOver();
+                return;
+            }
+
+            clearCanvas();
+            drawSnake();
+            drawApple();
+            moveSnake();
+
+            scoreElement.textContent = score;
+            recordElement.textContent = record;
+
+            setTimeout(gameLoop, 150); // Verzögerung von 150 Millisekunden
+        }
+
+        function keyDownHandler(e) {
+            switch (e.key) {
+                case 'ArrowUp':
+                    if (dy !== 1) {
+                        dx = 0;
+                        dy = -1;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (dy !== -1) {
+                        dx = 0;
+                        dy = 1;
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (dx !== 1) {
+                        dx = -1;
+                        dy = 0;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (dx !== -1) {
+                        dx = 1;
+                        dy = 0;
+                    }
+                    break;
+            }
+        }
+
+        function gameOver() {
+            document.removeEventListener('keydown', keyDownHandler);
+            gameOverScreen.style.display = 'flex';
+        }
+
+        window.onload = function() {
+            recordElement.textContent = record;
+        };
+    </script>
+</body>
+</html>
